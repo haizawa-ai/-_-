@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>補助金戦略ポートフォリオ診断</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:"Helvetica Neue",sans-serif;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.container{
+width:95%;
+max-width:520px;
+background:#1e293b;
+padding:30px;
+border-radius:15px;
+box-shadow:0 20px 40px rgba(0,0,0,0.4);
+}
+
+h1{text-align:center;font-size:20px;}
+.progress{height:6px;background:#334155;border-radius:5px;margin-bottom:20px;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#22d3ee);}
+.question{display:none;}
+button{
+width:100%;
+padding:14px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+font-size:15px;
+cursor:pointer;
+background:#334155;
+color:white;
+}
+button:hover{background:#475569;}
+.primary{background:linear-gradient(90deg,#2563eb,#22d3ee);font-weight:bold;}
+.result-box{
+background:#0f172a;
+padding:20px;
+border-radius:12px;
+margin-top:15px;
+}
+.highlight{
+font-size:22px;
+font-weight:bold;
+color:#22d3ee;
+}
+input{width:100%;padding:12px;border-radius:8px;border:none;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>補助金戦略インパクト診断</h1>
+
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+<div id="step1" class="question">
+<p>会社名</p>
+<input type="text" id="company">
+<button onclick="nextStep()">次へ</button>
+</div>
+
+<div id="step2" class="question">
+<p>研修予定はありますか？</p>
+<button onclick="selectAnswer('training','yes')">はい</button>
+<button onclick="selectAnswer('training','no')">いいえ</button>
+</div>
+
+<div id="step3" class="question">
+<p>賃上げ予定はありますか？</p>
+<button onclick="selectAnswer('wage','yes')">はい</button>
+<button onclick="selectAnswer('wage','no')">いいえ</button>
+</div>
+
+<div id="step4" class="question">
+<p>IT・AI導入予定はありますか？</p>
+<button onclick="selectAnswer('it','yes')">はい</button>
+<button onclick="selectAnswer('it','no')">いいえ</button>
+</div>
+
+<div id="result" class="question"></div>
+
+</div>
+
+<script>
+let currentStep=1;
+let totalSteps=4;
+let answers={};
+
+document.getElementById("step1").style.display="block";
+updateProgress();
+
+function nextStep(){
+document.getElementById("step"+currentStep).style.display="none";
+currentStep++;
+if(currentStep<=totalSteps){
+document.getElementById("step"+currentStep).style.display="block";
+}
+updateProgress();
+if(currentStep>totalSteps){
+showResult();
+}
+}
+
+function selectAnswer(key,val){
+answers[key]=val;
+nextStep();
+}
+
+function updateProgress(){
+let percent=(currentStep-1)/totalSteps*100;
+document.getElementById("progressBar").style.width=percent+"%";
+}
+
+function showResult(){
+
+let totalSubsidy=0;
+let selfCost=0;
+
+if(answers.training==="yes"){
+totalSubsidy+=1500000;
+selfCost+=500000;
+}
+
+if(answers.wage==="yes"){
+totalSubsidy+=2000000;
+selfCost+=1000000;
+}
+
+if(answers.it==="yes"){
+totalSubsidy+=1500000;
+selfCost+=1500000;
+}
+
+let threeYearImpact=totalSubsidy*2;
+let reductionRate=Math.round((totalSubsidy/(totalSubsidy+selfCost))*100);
+
+let html=`
+<div class="result-box">
+<p>御社の想定活用可能額</p>
+<p class="highlight">最大 ${totalSubsidy.toLocaleString()} 円</p>
+<p>自己負担想定：${selfCost.toLocaleString()} 円</p>
+<p>実質削減率：約 ${reductionRate}%</p>
+<hr>
+<p>3年間累計インパクト</p>
+<p class="highlight">${threeYearImpact.toLocaleString()} 円</p>
+<button class="primary" onclick="goContact()">戦略相談を申し込む</button>
+<button onclick="generatePDF()">PDF保存</button>
+</div>
+`;
+
+document.getElementById("result").innerHTML=html;
+document.getElementById("result").style.display="block";
+}
+
+function generatePDF(){
+const {jsPDF}=window.jspdf;
+const doc=new jsPDF();
+doc.text(document.getElementById("result").innerText,20,20);
+doc.save("補助金診断結果.pdf");
+}
+
+function goContact(){
+let message="補助金診断結果について戦略相談を希望します。\n\n"+
+document.getElementById("result").innerText;
+
+window.location.href="https://mygrant.jp/contact?message="+encodeURIComponent(message);
+}
+</script>
+
+</body>
+</html>
